@@ -78,9 +78,37 @@ class YoloDetector(Detector):
             raise ValueError("权重中存在未配置类别：{}".format(", ".join(unknown)))
 
     def detect(self, frame: np.ndarray) -> List[Detection]:
-        """TODO 3：调用 ``model.predict`` 并转换 boxes、类别和置信度。
+        """TODO 3：调用 ``model.predict`` 并转换 boxes、类别和置信度。"""
+        results = self.model.predict(
+            source=frame,
+            conf=self.confidence,
+            verbose=False,
+        )
+        detections = []  # type: List[Detection]
 
-        返回结果应按置信度从高到低排列。可使用测试中的 FakeYolo 学习接口，
-        无需为了完成本方法反复加载真实权重。
-        """
-        return []
+        for result in results:
+            names = getattr(result, "names", None) or self.model.names
+            boxes = getattr(result, "boxes", None)
+            if boxes is None:
+                continue
+
+            for box in boxes:
+                confidence = float(box.conf.item())
+                if confidence < self.confidence:
+                    continue
+
+                class_id = int(box.cls.item())
+                class_name = names[class_id]
+                waste_type = self.DEFAULT_CLASS_MAP[class_name]
+                xyxy = box.xyxy[0].cpu().numpy().tolist()
+                x1, y1, x2, y2 = (int(round(value)) for value in xyxy)
+                detections.append(
+                    Detection(
+                        waste_type=waste_type,
+                        class_name=class_name,
+                        confidence=confidence,
+                        box=(x1, y1, x2, y2),
+                    )
+                )
+
+        return sorted(detections, key=lambda item: item.confidence, reverse=True)

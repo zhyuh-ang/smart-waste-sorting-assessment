@@ -40,11 +40,19 @@ class VideoFileSource:
 
     def read(self) -> Tuple[bool, Optional[np.ndarray]]:
         """TODO 10：读取下一帧，正确处理视频结尾和解码失败。"""
-        return False, None
+        ok, frame = self.cap.read()
+        if not ok or frame is None or frame.size == 0:
+            return False, None
+        return True, frame
 
     def seek_frame(self, frame_index: int) -> bool:
         """TODO 11：校验范围并跳转到指定帧。"""
-        return False
+        if self.frame_count <= 0:
+            return False
+        if frame_index < 0 or frame_index >= self.frame_count:
+            return False
+        return bool(self.cap.set(cv2.CAP_PROP_POS_FRAMES, frame_index))
+        
 
     def restart(self) -> bool:
         """从第 0 帧重新播放。"""

@@ -178,13 +178,33 @@ class MainWindow(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot()
     def import_video(self) -> None:
         """TODO 8：弹出视频选择框并调用 worker.request_source。"""
-        self.append_log("TODO：请完成视频导入功能")
+        path, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self,
+            "选择视频文件",
+            "",
+            "视频文件 (*.mp4 *.avi *.mov *.mkv);;所有文件 (*)",
+        )
+        if not path:
+            return
+        self.worker.request_source("video", path)
+        self.append_log("已选择视频：{}".format(path))
 
     @QtCore.pyqtSlot()
     def open_camera(self) -> None:
         """TODO 9：选择/打开摄像头并调用 worker.request_source。"""
-        self.append_log("TODO：请完成摄像头输入功能")
-
+        index, ok = QtWidgets.QInputDialog.getInt(
+            self,
+            "打开摄像头",
+            "摄像头编号：",
+            0,
+            0,
+            9,
+            1,
+        )
+        if not ok:
+            return
+        self.worker.request_source("camera", str(index))
+        self.append_log("正在打开摄像头 {}".format(index))
     def _set_processing(self, enabled: bool) -> None:
         self._processing = enabled
         if enabled:
